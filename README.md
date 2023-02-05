@@ -122,8 +122,9 @@ export class AppModule {}
 ---
 ### 輸入上述 ngrok_url/helloworld 後顯示 hello world
 1. 註冊ngrok後產生token
-2. 終端機輸入./ngrok http 4000
-3. app.controller.ts修改
+2. 終端機輸入./ngrok authtoken <YOUR_AUTH_TOKEN>
+3. 終端機輸入./ngrok http 4000
+4. app.controller.ts修改
 ```tsx
 import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
@@ -144,7 +145,7 @@ export class AppController {
 
 }
 ```
-4. app.service.ts修改
+5. app.service.ts修改
 ```tsx
 import { Injectable } from '@nestjs/common';
 
