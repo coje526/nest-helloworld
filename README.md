@@ -1,9 +1,9 @@
 ### 建立環境
 
 1. 先到 [https://nodejs.org/en/](https://nodejs.org/en/) 下載LTS版
-2. 在終端機中輸入 "node -v"，以確認安裝是否成功並顯示Node.js版本。
+2. 在終端機中輸入 `node -v"`，以確認安裝是否成功並顯示Node.js版本。
 ![](https://i.imgur.com/O7VYDsX.jpg)
-3. 安裝 Nest CLI：在終端機中輸入 "npm install -g @nestjs/cli" 以安裝Nest CLI
+3. 安裝 Nest CLI：在終端機中輸入 `npm install -g @nestjs/cli`以安裝Nest CLI
 4. 輸入後出現
 ![](https://i.imgur.com/VogEtl0.jpg)
 5. 查詢後應該是資料夾的問題 （[https://gratch.tw/nodejs-npm-err-code-eacces/](https://gratch.tw/nodejs-npm-err-code-eacces/)）
@@ -14,7 +14,7 @@
     sudo chown -R `whoami` /usr/local/lib/node_modules
     ```
     
-7. 重複步驟三輸入 "npm install -g @nestjs/cli" 以安裝Nest CLI
+7. 重複步驟三輸入 `npm install -g @nestjs/cli`以安裝Nest CLI
 8. 裝完遇到以下
     ![](https://i.imgur.com/FrEM9xF.jpg)
 9. 終端機步驟
@@ -66,7 +66,7 @@ bootstrap();
 ---
 ### 實作 (get) helloworld API
 
-在src中新增main.ts
+在`src`中新增`main.ts`
 ```tsx
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
@@ -77,7 +77,7 @@ async function bootstrap() {
 }
 bootstrap();
 ```
-在src中新增app.controller.ts
+在`src`中新增`app.controller.ts`
 ```tsx
 import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
@@ -93,7 +93,7 @@ export class AppController {
 
 }
 ```
-在src中新增app.service.ts
+在`src`中新增`app.service.ts`
 ```tsx
 import { Injectable } from '@nestjs/common';
 
@@ -105,7 +105,7 @@ export class AppService {
 }
 ```
 
-在src中新增app.module.ts
+在`src`中新增`app.module.ts`
 ```tsx
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
@@ -122,9 +122,9 @@ export class AppModule {}
 ---
 ### 輸入上述 ngrok_url/helloworld 後顯示 hello world
 1. 註冊ngrok後產生token
-2. 終端機輸入./ngrok authtoken <YOUR_AUTH_TOKEN>
-3. 終端機輸入./ngrok http 4000
-4. app.controller.ts修改
+2. 終端機輸入`./ngrok authtoken <YOUR_AUTH_TOKEN>`
+3. 終端機輸入`./ngrok http 4000`
+4. `app.controller.ts`修改
 ```tsx
 import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
