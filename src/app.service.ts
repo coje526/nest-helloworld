@@ -1,12 +1,28 @@
 import { Injectable } from '@nestjs/common';
+import { CreateStockedRecord } from './dto/create-stocked-record.dto';
+import { login } from './dto/create-user.dto';
+import { StockedDto } from './dto/stocked.dto';
 
 @Injectable()
 export class AppService {
-  getHello(): string {
-    return 'Hello World~~~~~';
+  createStockedRecord(data: CreateStockedRecord) {
+    return data;
+  }
+ 
+  StockedDto(data: StockedDto) {
+    return data;
   }
 
-  getHello2(): string {
-    return 'Hello World!!';
+  getStocksList() {
+      return;
   }
+
+  getStocks() {
+    return ;
+  }
+ 
+ 
+
+
 }
+

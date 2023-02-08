@@ -1,161 +1,157 @@
-### 建立環境
+# 作業二：swagger API
+[實作功能]
+於開發環境中架設可用來說明 API 規格的說明文件
 
-1. 先到 [https://nodejs.org/en/](https://nodejs.org/en/) 下載LTS版
-2. 在終端機中輸入 `node -v"`，以確認安裝是否成功並顯示Node.js版本。
-![](https://i.imgur.com/O7VYDsX.jpg)
-3. 安裝 Nest CLI：在終端機中輸入 `npm install -g @nestjs/cli`以安裝Nest CLI
-4. 輸入後出現
-![](https://i.imgur.com/VogEtl0.jpg)
-5. 查詢後應該是資料夾的問題 （[https://gratch.tw/nodejs-npm-err-code-eacces/](https://gratch.tw/nodejs-npm-err-code-eacces/)）
-6. 解決方法如下
-    
-    ```jsx
-    sudo chown -R `whoami` ~/.npm
-    sudo chown -R `whoami` /usr/local/lib/node_modules
-    ```
-    
-7. 重複步驟三輸入 `npm install -g @nestjs/cli`以安裝Nest CLI
-8. 裝完遇到以下
-    ![](https://i.imgur.com/FrEM9xF.jpg)
-9. 終端機步驟
+[驗收方式]
+可於網頁上顯示 API 說明文件，內容須包含說明 header/body/param/response
 
-```tsx
-  147  sudo find / -name nest
-  //找有nest檔名的
-  148  sudo find /usr -name nest
-  //找在usr裡檔名有nest的
-  149  sudo find ~ -name nest
-  //找/Users/jennyhsu檔名有nest的->下圖
-  150  /Users/jennyhsu/jenny/node_modules/.bin/nest\n
-  //再次確認
-  151  ln -s /Users/jennyhsu/jenny/node_modules/.bin/nest /usr/local/bin/nest
-  //建立新路徑(但沒有權限)
-  152  sudo ln -s /Users/jennyhsu/jenny/node_modules/.bin/nest /usr/local/bin/nest
-  //使用sudo來建立新路徑
-  153  nest
-
-```
-
-- 149 步驟出現以下
-![](https://i.imgur.com/7FounwF.jpg)
-
-
-- 151、152步驟
-![](https://i.imgur.com/Syq7XpW.jpg)
 
 
 ---
-
-### 使用 4000 port 作為後端 server port
-
-找到 main.ts (載入點)後 app.listen(3000改成4000)
-
-以非同步的 `bootstrap` 函式做為載入函式，透過 `NestFactory.create(AppModule)` 產生一個 Nest App 的實例 (Instance)，並透過呼叫該實例的 `listen(PORT)` 將其架設起來。
-
-```tsx
+### 2/7更新
+要有上鎖圖示
+在`app.controller.ts`加入
+```tsm
+@ApiBasicAuth()
+```
+在`main.ts`加入
+```tsm
+.addBasicAuth()
+```
+`main.ts`如下
+```tsm
 import { NestFactory } from '@nestjs/core';
+import { INestApplication } from '@nestjs/common';
+import { DocumentBuilder, SwaggerCustomOptions, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  await app.listen(4000);
+  setupSwagger(app);
+  await app.listen(3000);
 }
+
+function setupSwagger(app: INestApplication) {
+  const builder = new DocumentBuilder();
+  const config = builder
+    .setTitle('UserLogin')
+    .setDescription('This is a basic Swagger document.')
+    .setVersion('1.0')
+    .addBasicAuth()
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  const options: SwaggerCustomOptions = {
+    explorer: true, // 開啟搜尋列
+  };
+  SwaggerModule.setup('api', app, document, options);
+}
+
 bootstrap();
 ```
+改成`.addApiKey(null, "token")`
+![](https://i.imgur.com/0JltpWI.png)
 
 ---
-### 實作 (get) helloworld API
 
-在`src`中新增`main.ts`
-```tsx
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
+* 中間有因為少call一個function 所以打了一個POST 兩個GET 出現永遠都只有兩個的狀況
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  await app.listen(4000);
-}
-bootstrap();
+*  把StockedDto放進list裡
+
+![](https://i.imgur.com/epmSqRY.png)
+
+
+
+在`app.controller.ts`加入`@ApiExtraModels(StockedDto)`及`$ref: getSchemaPath(StockedDto)`
+
+要記得將`getSchemaPath` import
+```tsm
+
+list: {
+          type: 'object',
+          description:'可輸入入庫資料的工單清單',
+          $ref: getSchemaPath(StockedDto),
+        },
+        
 ```
-在`src`中新增`app.controller.ts`
-```tsx
-import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
+發現`description:'可輸入入庫資料的工單清單'`不見了
+後來有找到方法 將`'object'`改成`'array'`
 
-@Controller()
-export class AppController {
-  constructor(private readonly appService: AppService) {}
-
-  @Get()
-  getHello(): string {
-    return this.appService.getHello();
-  }
-
-}
-```
-在`src`中新增`app.service.ts`
-```tsx
-import { Injectable } from '@nestjs/common';
-
-@Injectable()
-export class AppService {
-  getHello(): string {
-    return 'Hello World~~~~~';
-  }
-}
-```
-
-在`src`中新增`app.module.ts`
-```tsx
-import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-
-@Module({
-  imports: [],
-  controllers: [AppController],
-  providers: [AppService],
-})
-export class AppModule {}
-
-```
 ---
-### 輸入上述 ngrok_url/helloworld 後顯示 hello world
-1. 註冊ngrok後產生token
-2. 終端機輸入`./ngrok authtoken <YOUR_AUTH_TOKEN>`
-3. 終端機輸入`./ngrok http 4000`
-4. `app.controller.ts`修改
-```tsx
-import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
+* 加入Enum
+![](https://i.imgur.com/RiUHHwS.png)
 
-@Controller()
-export class AppController {
-  constructor(private readonly appService: AppService) {}
+建立一個 `type` 資料夾並建立一個 `priority.type.ts` 的檔案
 
-   @Get('helloworld')
-  getHello(): string {
-    return this.appService.getHello();
+`priority.type.ts`:
+```tsm
+export enum StockedPriority {
+  UnProduction = 'UnProduction',
+  InProduction = 'InProduction',
+  Suspend = 'Suspend',
+  Completed = 'Completed',
+  Incomplete = 'Incomplete',
   }
-
-  @Get()
-  getHello2(): string {
-    return this.appService.getHello2();
-  }
-
-}
 ```
-5. app.service.ts修改
-```tsx
-import { Injectable } from '@nestjs/common';
+`stocked-detail.dto.ts` 加入
+`import {  StockedRecordDto } from './stocked-record.dto';`  及 `enum: StockedPriority,`
+```tsm
+@ApiProperty({
+        default: "0",
+        enum: StockedPriority,
+        description:`\n
+        工單生產狀態:\n
+        0 => 未開始(UnProduction)\n
+        1 => 生產中(InProduction)\n
+        2 => 暫停(Suspend)\n
+        3 => 已完成(Completed)\n
+        4 => 未完成(Incomplete)`,
+      })
+      productionStatus: string; StockedPriority;
+```
+* 將工單生產狀態改為下圖
+![](https://i.imgur.com/k1fvs1p.png)
+```tsm
+       `<br>工單生產狀態:</br>
+        <br>0 => 未開始(UnProduction)</br>
+        <br>1 => 生產中(InProduction)</br>
+        <br>2 => 暫停(Suspend)</br>
+        <br>3 => 已完成(Completed)</br>
+        <br>4 => 未完成(Incomplete)</br>`
+```
 
-@Injectable()
-export class AppService {
-  getHello(): string {
-    return 'Hello World~~~~~';
-  }
-  getHello2(): string {
-    return 'Hello World!!';
-  }
-}
+
+
+
+---
+* `product`裡再新增一個dto
+![](https://i.imgur.com/0UENrEk.png)
+新增一個 `stocked-detail-product.dto.ts` 至 `dto`
+
+`stocked-detail-product.dto.ts` :
+```tsm
+import {  ApiProperty } from '@nestjs/swagger';
+
+export class DetailProduct {
+  
+    @ApiProperty({
+        example: 'WIRE38',
+        description: '商品品號',
+      })
+      id: string;
+    
+      @ApiProperty({
+        example: 0.5,
+        description: '單位淨重',
+      })
+      weight: number;
+    }
+```
+`stocked-detail.dto.ts`:
+```tsm
+@ApiProperty({
+        description: '商品資料',
+        allOf:[
+            { $ref: getSchemaPath(DetailProduct) },
+        ]
+      })
 ```

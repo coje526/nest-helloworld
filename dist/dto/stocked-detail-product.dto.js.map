@@ -1,0 +1,1 @@
+{"version":3,"file":"stocked-detail-product.dto.js","sourceRoot":"","sources":["../../src/dto/stocked-detail-product.dto.ts"],"names":[],"mappings":";;;;;;;;;;;;AAAA,6CAA+C;AAE/C,MAAa,aAAa;CAarB;AAXD;IAAC,IAAA,qBAAW,EAAC;QACT,OAAO,EAAE,QAAQ;QACjB,WAAW,EAAE,MAAM;KACpB,CAAC;;yCACS;AAEX;IAAC,IAAA,qBAAW,EAAC;QACX,OAAO,EAAE,GAAG;QACZ,WAAW,EAAE,MAAM;KACpB,CAAC;;6CACa;AAZrB,sCAaK"}
