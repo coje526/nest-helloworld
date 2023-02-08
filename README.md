@@ -74,7 +74,14 @@ list: {
         
 ```
 發現`description:'可輸入入庫資料的工單清單'`不見了
-後來有找到方法 將`'object'`改成`'array'`
+後來有找到方法，將`'object'`改成`'array'`
+```tsm
+ list: {
+          type: 'array',
+          description:'可輸入入庫資料的工單清單',
+          items: {$ref: getSchemaPath(StockedDto)}
+        },
+```
 
 ---
 * 加入Enum
