@@ -1,157 +1,98 @@
-# 作業二：swagger API
+# 作業三：使用 pm2 啟動 Node.js cluster
 [實作功能]
-於開發環境中架設可用來說明 API 規格的說明文件
+透過 pm2 來啟動開發環境 cluster
 
 [驗收方式]
-可於網頁上顯示 API 說明文件，內容須包含說明 header/body/param/response
+
+1. 使用 pm2 啟動 4 個 application process instances, 每個 cluster 分配 1G 的 RAM
+2. 透過 pm2 設定不同環境下的 environment variable(development/staging/production)
+3. 能產出 log
 
 
 
 ---
-### 2/7更新
-要有上鎖圖示
-在`app.controller.ts`加入
-```tsm
-@ApiBasicAuth()
-```
-在`main.ts`加入
-```tsm
-.addBasicAuth()
-```
-`main.ts`如下
-```tsm
-import { NestFactory } from '@nestjs/core';
-import { INestApplication } from '@nestjs/common';
-import { DocumentBuilder, SwaggerCustomOptions, SwaggerModule } from '@nestjs/swagger';
-import { AppModule } from './app.module';
+### 安裝方法
+1.Install PM2 
+    `  npm install pm2@latest -g`
+    
+---
+### cluster 叢集模式
+* pm2 自動偵測該機器的 CPU 數量，啟動最大能負荷的 process, 適用上面的選項, -i 後面接希望啟動 instance 的數量， 0 或 max 默認自動偵測 CPU 啟動最大值
+`pm2 start app.js -i max`
+* 針對第一點啟動4 個 application process instances
+`pm2 start -i 4 --name server index.js，-i`
+4 是指跑 4 個 process(進程) 的意思，成功跑起來的話應該會看到這個畫面
+![](https://i.imgur.com/tzHDE5J.png)
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  setupSwagger(app);
-  await app.listen(3000);
+---
+### 設定環境變數 environment variable
+1. 先新增一個`ecosystem.config.js`
+```tsm
+module.exports = {
+  apps : [{
+    name: "app",
+    script: "./app.js",
+    env: {
+      NODE_ENV: "development",
+    },
+    env_production: {
+      NODE_ENV: "production",
+    }
+  }]
 }
-
-function setupSwagger(app: INestApplication) {
-  const builder = new DocumentBuilder();
-  const config = builder
-    .setTitle('UserLogin')
-    .setDescription('This is a basic Swagger document.')
-    .setVersion('1.0')
-    .addBasicAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  const options: SwaggerCustomOptions = {
-    explorer: true, // 開啟搜尋列
-  };
-  SwaggerModule.setup('api', app, document, options);
-}
-
-bootstrap();
 ```
-改成`.addApiKey(null, "token")`
-![](https://i.imgur.com/0JltpWI.png)
+2. run `pm2 start ecosystem.config.js --env production`
 
----
-
-* 中間有因為少call一個function 所以打了一個POST 兩個GET 出現永遠都只有兩個的狀況
-
-*  把StockedDto放進list裡
-
-![](https://i.imgur.com/epmSqRY.png)
-
-
-
-在`app.controller.ts`加入`@ApiExtraModels(StockedDto)`及`$ref: getSchemaPath(StockedDto)`
-
-要記得將`getSchemaPath` import
+* 因為要設置 development/staging/production
+* 所以新增3個檔案 
+`ecosystem.development.config.js` 
+`ecosystem.production.config.js`
+`ecosystem.staging.config.js`
 ```tsm
-
-list: {
-          type: 'object',
-          description:'可輸入入庫資料的工單清單',
-          $ref: getSchemaPath(StockedDto),
-        },
-        
-```
-發現`description:'可輸入入庫資料的工單清單'`不見了
-後來有找到方法 將`'object'`改成`'array'`
-
----
-* 加入Enum
-![](https://i.imgur.com/RiUHHwS.png)
-
-建立一個 `type` 資料夾並建立一個 `priority.type.ts` 的檔案
-
-`priority.type.ts`:
-```tsm
-export enum StockedPriority {
-  UnProduction = 'UnProduction',
-  InProduction = 'InProduction',
-  Suspend = 'Suspend',
-  Completed = 'Completed',
-  Incomplete = 'Incomplete',
+module.exports = {
+    apps : [{
+      name   : 'app',
+      script : 'dist/main.js',
+      instances: 4,
+      exec_mode: 'cluster',
+      max_memory_restart: '1G',
+      error_file: './logs/app-development-err.log',
+      out_file: './logs/app-development-out.log',
+      log: './logs/app-development.log',
+      env_development: {
+        NODE_ENV: 'development'
+      },
+    }]
   }
 ```
-`stocked-detail.dto.ts` 加入
-`import {  StockedRecordDto } from './stocked-record.dto';`  及 `enum: StockedPriority,`
-```tsm
-@ApiProperty({
-        default: "0",
-        enum: StockedPriority,
-        description:`\n
-        工單生產狀態:\n
-        0 => 未開始(UnProduction)\n
-        1 => 生產中(InProduction)\n
-        2 => 暫停(Suspend)\n
-        3 => 已完成(Completed)\n
-        4 => 未完成(Incomplete)`,
-      })
-      productionStatus: string; StockedPriority;
-```
-* 將工單生產狀態改為下圖
-![](https://i.imgur.com/k1fvs1p.png)
-```tsm
-       `<br>工單生產狀態:</br>
-        <br>0 => 未開始(UnProduction)</br>
-        <br>1 => 生產中(InProduction)</br>
-        <br>2 => 暫停(Suspend)</br>
-        <br>3 => 已完成(Completed)</br>
-        <br>4 => 未完成(Incomplete)</br>`
-```
-
+* 一開始檔案名稱少`.config`
+![](https://i.imgur.com/TcUOhvg.png)
+3. run `pm2 start ecosystem.development.config.js --env development`
+![](https://i.imgur.com/msfvEfu.png)
+![](https://i.imgur.com/QRgqBMd.png)
+4. run `pm2 start ecosystem.staging.config.js --env staging`
+![](https://i.imgur.com/rOwEwiA.png)
+5. run `pm2 start ecosystem.production.config.js --env production`
+![](https://i.imgur.com/OLOPwvE.png)
 
 
 
 ---
-* `product`裡再新增一個dto
-![](https://i.imgur.com/0UENrEk.png)
-新增一個 `stocked-detail-product.dto.ts` 至 `dto`
+ ### 啟動可以附加的參數
+* `--name`
+    指定 app 一個名字
+* `--watch`
+    檔案有變更時，會自動重新啟動
+* `--max-memory-restart`
+    Memory 使用超過這個門檻時，會自動重啟
+* `--log`
+    指定 log 的位址, 若要指定新位址，需將原本的 process 刪掉，再重新啟動指定
+* `--output`
+    指定 output log 位址
+* `--error`
+    指定 error log 位址
+* `--log-date-format`
+    指定 log 的格式
+* `--basic-auth-username --basic-auth-password`
+    用於靜態檔, 讓該頁面需要帳號密碼方可存取
 
-`stocked-detail-product.dto.ts` :
-```tsm
-import {  ApiProperty } from '@nestjs/swagger';
-
-export class DetailProduct {
-  
-    @ApiProperty({
-        example: 'WIRE38',
-        description: '商品品號',
-      })
-      id: string;
-    
-      @ApiProperty({
-        example: 0.5,
-        description: '單位淨重',
-      })
-      weight: number;
-    }
-```
-`stocked-detail.dto.ts`:
-```tsm
-@ApiProperty({
-        description: '商品資料',
-        allOf:[
-            { $ref: getSchemaPath(DetailProduct) },
-        ]
-      })
-```
