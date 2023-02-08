@@ -79,8 +79,8 @@ export class AppController {
       },
     },
   })
-  getStocksList() {
-    return;
+  getStocksList(): string {
+    return process.env.NODE_ENV;
   }
   
   @Get('api/stocks')
@@ -151,7 +151,10 @@ export class AppController {
   },
   })
   getStocks() {
-   return;
+    setInterval(function(){
+      console.log('check data');
+      },3000);
+   return true;
   }
   
   @Post('api/stocks')
