@@ -5,8 +5,6 @@ import { CreateStockedRecord } from './dto/create-stocked-record.dto';
 import { StockedDto } from './dto/stocked.dto';
 import { StockedDetailDto } from './dto/stocked-detail.dto';
 
-
-
 @ApiBasicAuth()
 @ApiTags('stock')
 @Controller()
@@ -151,10 +149,7 @@ export class AppController {
   },
   })
   getStocks() {
-    setInterval(function(){
-      console.log('check data');
-      },3000);
-   return true;
+    return process.env.NODE_ENV;
   }
   
   @Post('api/stocks')

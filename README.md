@@ -26,55 +26,39 @@
 
 ---
 ### 設定環境變數 environment variable
-1. 先新增一個`ecosystem.config.js`
+1. `main.ts`:
 ```tsm
-module.exports = {
-  apps : [{
-    name: "app",
-    script: "./app.js",
-    env: {
-      NODE_ENV: "development",
-    },
-    env_production: {
-      NODE_ENV: "production",
-    }
-  }]
+async function bootstrap() {
+    const app = await NestFactory.create(AppModule, {
+    logger: new AppLogger(process.env.NODE_ENV),
+  });
+  setupSwagger(app);
+  await app.listen(4000);
 }
 ```
-2. run `pm2 start ecosystem.config.js --env production`
-
-* 因為要設置 development/staging/production
-* 所以新增3個檔案 
-`ecosystem.development.config.js` 
-`ecosystem.production.config.js`
-`ecosystem.staging.config.js`
+2. 新增一個檔案`app.logger.ts`
 ```tsm
-module.exports = {
-    apps : [{
-      name   : 'app',
-      script : 'dist/main.js',
-      instances: 4,
-      exec_mode: 'cluster',
-      max_memory_restart: '1G',
-      error_file: './logs/app-development-err.log',
-      out_file: './logs/app-development-out.log',
-      log: './logs/app-development.log',
-      env_development: {
-        NODE_ENV: 'development'
-      },
-    }]
-  }
-```
-* 一開始檔案名稱少`.config`
-![](https://i.imgur.com/TcUOhvg.png)
-3. run `pm2 start ecosystem.development.config.js --env development`
-![](https://i.imgur.com/msfvEfu.png)
-![](https://i.imgur.com/QRgqBMd.png)
-4. run `pm2 start ecosystem.staging.config.js --env staging`
-![](https://i.imgur.com/rOwEwiA.png)
-5. run `pm2 start ecosystem.production.config.js --env production`
-![](https://i.imgur.com/OLOPwvE.png)
+import { ConsoleLogger, Injectable, LoggerService } from '@nestjs/common';
 
+@Injectable()
+export class AppLogger extends ConsoleLogger implements LoggerService {
+  constructor(
+    context: string,
+  ) {
+    super(context);
+    /***
+     * @condition to check if it is in testing mode
+     */
+    if (context === 'production') {
+      this.setLogLevels(['error', 'warn']);
+    }else{
+      this.setLogLevels(['debug', 'error', 'log', 'verbose', 'warn']);
+    }
+    console.log(context);
+  }
+}
+```
+![](https://i.imgur.com/iW54vir.png)
 
 
 ---
