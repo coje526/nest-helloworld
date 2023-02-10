@@ -20,7 +20,7 @@
 * pm2 自動偵測該機器的 CPU 數量，啟動最大能負荷的 process, 適用上面的選項, -i 後面接希望啟動 instance 的數量， 0 或 max 默認自動偵測 CPU 啟動最大值
 `pm2 start app.js -i max`
 * 針對第一點啟動4 個 application process instances
-`pm2 start -i 4 --name server index.js，-i`
+`pm2 start -i 4 --name server index.js，-i
 4 是指跑 4 個 process(進程) 的意思，成功跑起來的話應該會看到這個畫面
 ![](https://i.imgur.com/tzHDE5J.png)
 
