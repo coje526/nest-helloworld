@@ -24,10 +24,10 @@ let AppController = class AppController {
         this.appService = appService;
     }
     getStocksList() {
-        return;
+        return 'Hi';
     }
     getStocks() {
-        return;
+        return 'hello world';
     }
     createStockedRecord(data) {
         return this.appService.createStockedRecord(data);

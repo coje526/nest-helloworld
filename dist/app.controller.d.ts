@@ -3,7 +3,7 @@ import { CreateStockedRecord } from './dto/create-stocked-record.dto';
 export declare class AppController {
     private readonly appService;
     constructor(appService: AppService);
-    getStocksList(): void;
-    getStocks(): void;
+    getStocksList(): string;
+    getStocks(): string;
     createStockedRecord(data: CreateStockedRecord): CreateStockedRecord;
 }

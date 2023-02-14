@@ -2,11 +2,14 @@ import { NestFactory } from '@nestjs/core';
 import { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, SwaggerCustomOptions, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { AppLogger } from './app.logger';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  setupSwagger(app);
-  await app.listen(3000);
+  const app = await NestFactory.create(AppModule, {
+  logger: new AppLogger(process.env.NODE_ENV),
+});
+setupSwagger(app);
+await app.listen(3000);
 }
 
 function setupSwagger(app: INestApplication) {

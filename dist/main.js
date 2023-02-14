@@ -3,8 +3,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const core_1 = require("@nestjs/core");
 const swagger_1 = require("@nestjs/swagger");
 const app_module_1 = require("./app.module");
+const app_logger_1 = require("./app.logger");
 async function bootstrap() {
-    const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    const app = await core_1.NestFactory.create(app_module_1.AppModule, {
+        logger: new app_logger_1.AppLogger(process.env.NODE_ENV),
+    });
     setupSwagger(app);
     await app.listen(3000);
 }

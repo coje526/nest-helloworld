@@ -80,7 +80,7 @@ export class AppController {
     },
   })
   getStocksList() {
-    return;
+    return 'Hi';
   }
   
   @Get('api/stocks')
@@ -150,8 +150,8 @@ export class AppController {
     },
   },
   })
-  getStocks() {
-   return;
+  getStocks()  {
+   return 'hello world';
   }
   
   @Post('api/stocks')
