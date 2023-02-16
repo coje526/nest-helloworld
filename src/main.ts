@@ -9,7 +9,7 @@ async function bootstrap() {
   logger: new AppLogger(process.env.NODE_ENV),
 });
 setupSwagger(app);
-await app.listen(3000);
+await app.listen(4000);
 }
 
 function setupSwagger(app: INestApplication) {

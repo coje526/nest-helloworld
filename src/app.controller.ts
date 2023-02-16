@@ -1,11 +1,9 @@
-import { Controller, Get, Post, Body} from '@nestjs/common';
+import { Controller, Get, Post, Body, Delete, Query} from '@nestjs/common';
 import { ApiHeader, getSchemaPath, ApiExtraModels, ApiQuery, ApiBasicAuth, ApiTags, ApiOkResponse, ApiBadRequestResponse,ApiOperation } from '@nestjs/swagger';
 import { AppService} from './app.service';
 import { CreateStockedRecord } from './dto/create-stocked-record.dto';
 import { StockedDto } from './dto/stocked.dto';
 import { StockedDetailDto } from './dto/stocked-detail.dto';
-
-
 
 @ApiBasicAuth()
 @ApiTags('stock')
@@ -221,11 +219,24 @@ export class AppController {
     },
   },
   })
-  createStockedRecord(@Body() data: CreateStockedRecord) {
+  createStockedRecord(@Body() data: CreateStockedRecord, @Query() query: string) {
+    console.log(query['dispatchId']);
     return this.appService.createStockedRecord(data);
   }
 
-  
+  @Post('api/redis')
+  async setKey() {
+    return this.appService.setKey();
+  }
+  @Get('api/redis')
+  async getKey() {
+    return this.appService.getKey();
+  }
+
+  @Delete('api/redis')
+  async deleteKey() {
+    return this.appService.deleteKey();
+  }
 }
 
 
