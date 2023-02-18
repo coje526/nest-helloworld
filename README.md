@@ -1,128 +1,57 @@
-# 作業五：架設 Redis server
-[實作功能]
-於本機端透過 docker 架設 Redis server
+# Redis SET NX 建立互斥鎖
+[描述]
+透過 Redis SET NX 來建立互斥鎖，以避免資料的 race condition
 
 [驗收方式]
 
-於開發環境中實作可對 Redis server 進行 SET/GET/DELETE key 功能的 API
-需對 Redis server 進行帳號密碼設定
-透過 docker 部署驗收環境
+於 Redis 中先建立 {"treasure": 100}。
+寫一隻可用來改變 treasure 的 api (假設行為是 value += 1)
+連續呼叫 api
+treasure 在十秒內只能被改變一次
 
 ---
-1. 新增一個 `redis.conf`
-到 https://redis.io/docs/management/config/ 下載相對應版本的
-2.  `docker-compose` 新增redis
+1. `app.service.ts`:
 ```tsm
- redis:
-    image: redis
-    volumes:
-      - ./redis.conf:/usr/local/etc/redis/redis.conf
-    container_name: myredis
-    command: redis-server /usr/local/etc/redis/redis.conf
-    ports:
-      - target: 6379
-        published: 6379
-        protocol: tcp
-    environment: 
-      - ENV=develop
+  async treasure() {
+    const LOCK_TIMEOUT = 10 ;
+    let lock = "0" ;
+    let lock_timeout = 0 ;
+    const locke_key = 'lock.foo';
+    while (lock != 'OK'){
+      const now = Math.floor(Date.now() / 1000);
+      lock_timeout = now + LOCK_TIMEOUT;
+      lock = await this.redis.set(locke_key,lock_timeout, 'EX', 10, 'NX');
+      console.log(lock);
+      if (lock == 'OK' || (now > parseInt(await this.redis.get(locke_key)) && now > parseInt(await this.redis.getset(locke_key, lock_timeout)))){
+        break ;
+      }else{
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+    };
+    const redisData = await this.redis.get('treasure');
+    const redisAdd = parseInt(redisData) +  1;
+    await this.redis.set('treasure', redisAdd );
+   
+    return redisAdd;
+  }
+
 ```
-3. `docker compose up`
-![](https://i.imgur.com/umFCFle.png)
-4. `redis.conf` 中設定帳號密碼
-![](https://i.imgur.com/FR5snbg.png)
-5. 輸入`AUTH username password` 登入成功
-![](https://i.imgur.com/Ck1Lnpp.png)
-7. `ACL SETUSER username on allkeys +set >password`
-![](https://i.imgur.com/sUr8uYY.png)
-9. redis 加入 health check
+2. `app.controller.ts`
 ```tsm
- healthcheck:
-      test: ["CMD", "redis-cli","ping"]
+  @Get('api/treasure')
+  async treasure() {
+    return this.appService.treasure();
+  }
 ```
-
-
-
-![](https://i.imgur.com/zWkxfyV.png)
-
----
-###  SET/GET/DELETE key 功能的 API
-1. `app.modules.ts`:
+3. 新增一個 `script` 資料夾加入 `for_crul.ts`
 ```tsm
-import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { RedisModule } from '@nestjs-modules/ioredis';
-
-@Module({
-  imports: [
-    RedisModule.forRootAsync({
-      useFactory: () => ({
-        config: { 
-          url: 'redis://localhost:6379',
-          password: 'mypassword'
-        },
-      }),
-    }),
-  ],
-  controllers: [AppController],
-  providers: [AppService],
-  
-})
-export class AppModule {
-}
+for i in {1..5}; do
+  curl 'http://localhost:3000/api/treasure'
+done
 ```
-2. `app.service.ts`:
-```tsm
-import { Injectable } from '@nestjs/common';
-import { CreateStockedRecord } from './dto/create-stocked-record.dto';
-import { StockedDto } from './dto/stocked.dto';
-import { InjectRedis, Redis } from '@nestjs-modules/ioredis';
+使用`sh script/for_curl.sh`來連續打api
+![](https://i.imgur.com/oNvWUgH.png)
 
-@Injectable()
-export class AppService {
-  constructor(@InjectRedis() private readonly redis: Redis) {}
+![](https://i.imgur.com/LJSjFPm.png)
 
-  async setKey() {
-    await this.redis.set('jenny', 'add key');
-    return true;
-  }
-
-  async getKey() {
-    const redisData = await this.redis.get("jenny");
-    return { redisData };
-  }
-
-  async deleteKey() {
-    await this.redis.del('key');
-    return true;
-  }
-}
-```
-3. `app.conntroller.ts`:
-```tsm
-@ApiBasicAuth()
-@ApiTags('stock')
-@Controller()
-export class AppController {
-  constructor(private readonly appService: AppService) {}
-  @Post('api/redis')
-  async setKey() {
-    return this.appService.setKey();
-  }
-  @Get('api/redis')
-  async getKey() {
-    return this.appService.getKey();
-  }
-
-  @Delete('api/redis')
-  async deleteKey() {
-    return this.appService.deleteKey();
-  }
-}
-```
----
-* 有遇到下面狀況 後來更新node版本就解決了
-![](https://i.imgur.com/DPRTlt2.png)
-
-
-
+![](https://i.imgur.com/UpGkgfs.png)

@@ -8,8 +8,8 @@ import { RedisModule } from '@nestjs-modules/ioredis';
     RedisModule.forRootAsync({
       useFactory: () => ({
         config: { 
-          url: 'redis://localhost:6379',
-          password: 'mypassword'
+          url: 'redis://redis:6379',
+          password: 'password'
         },
       }),
     }),

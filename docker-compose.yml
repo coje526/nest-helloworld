@@ -1,8 +1,10 @@
 version: '3.6'
 services:
   docker-swagger:
-    image: slim-app
+    image: app
     build: .
+    depends_on:
+       - "redis"
     healthcheck:
       test: [ "CMD", "/usr/local/bin/healthcheck" ]
       interval: 30s

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Delete, Query} from '@nestjs/common';
+import { Controller, Get, Post, Body, Delete, Query, Headers} from '@nestjs/common';
 import { ApiHeader, getSchemaPath, ApiExtraModels, ApiQuery, ApiBasicAuth, ApiTags, ApiOkResponse, ApiBadRequestResponse,ApiOperation } from '@nestjs/swagger';
 import { AppService} from './app.service';
 import { CreateStockedRecord } from './dto/create-stocked-record.dto';
@@ -9,6 +9,8 @@ import { StockedDetailDto } from './dto/stocked-detail.dto';
 @ApiTags('stock')
 @Controller()
 export class AppController {
+  
+  private tokenList = [];
   constructor(private readonly appService: AppService) {}
  
   @Get('api/stocks/list')
@@ -148,8 +150,11 @@ export class AppController {
     },
   },
   })
-  getStocks()  {
-   return 'hello world';
+  getStocks(@Body() data: CreateStockedRecord, @Query() query: string, @Headers() header: string)  {
+    console.log(query['dispatchId'],header['token']);
+    const dispatchId = query['dispatchId'];
+    const token =header['token'] ;
+    return this.appService.getStocks(dispatchId, token);;
   }
   
   @Post('api/stocks')
@@ -219,9 +224,17 @@ export class AppController {
     },
   },
   })
-  createStockedRecord(@Body() data: CreateStockedRecord, @Query() query: string) {
-    console.log(query['dispatchId']);
-    return this.appService.createStockedRecord(data);
+  createStockedRecord(@Body() data: CreateStockedRecord, @Query() query: string, @Headers() header: string) {
+    console.log(query['dispatchId'],header['token']);
+    const dispatchId = query['dispatchId'];
+    const token =header['token'] ;
+    const obj = '{"dispatchId":' + dispatchId + ', "token":' + token + '}'
+    return this.appService.createStockedRecord(obj);
+  }
+
+  @Get('api/healthy')
+  async getHealthy() {
+    return this.appService.getHealthy();
   }
 
   @Post('api/redis')
@@ -233,10 +246,18 @@ export class AppController {
     return this.appService.getKey();
   }
 
+  @Get('api/treasure')
+  async treasure() {
+    return this.appService.treasure();
+  }
+
+
   @Delete('api/redis')
   async deleteKey() {
     return this.appService.deleteKey();
   }
+
+  
 }
 
 
