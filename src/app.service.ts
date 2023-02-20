@@ -43,31 +43,19 @@ export class AppService {
   }
 
   async treasure() {
-    const LOCK_TIMEOUT = 10 ;
-    let lock = "0" ;
-    let lock_timeout = 0 ;
-    const locke_key = 'lock.foo';
-    while (lock != 'OK'){
-      const now = Math.floor(Date.now() / 1000);
-      lock_timeout = now + LOCK_TIMEOUT;
-      lock = await this.redis.set(locke_key,lock_timeout, 'EX', 10, 'NX');
-      console.log(lock);
-      if (lock == 'OK' || (now > parseInt(await this.redis.get(locke_key)) && now > parseInt(await this.redis.getset(locke_key, lock_timeout)))){
-        break ;
-      }else{
-        await new Promise(resolve => setTimeout(resolve, 3000));
-      }
-    };
-    const redisData = await this.redis.get('treasure');
-    const redisAdd = parseInt(redisData) +  1;
-    await this.redis.set('treasure', redisAdd );
-   
-    return redisAdd;
+    let lock = await this.redis.set('lock.foo', 1, 'EX', 10, 'NX');
+    if (lock == 'OK'){
+      const redisData = parseInt(await this.redis.get('treasure')) + 1;
+      await this.redis.set('treasure', redisData );
+      await this.redis.del('lock.foo'); 
+      return redisData;
+    } 
+      return 'error';
   }
 
   async deleteKey() {
     await this.redis.del(this.key);
     return true;
-  }
+  } 
 }
 
