@@ -51,4 +51,4 @@ MYSQL_ROOT_PASSWORD=123456
 ```
 5. 執行`docker build -t app . && docker-compose up`
 6. 使用 TablePlus 連線
-7.  ![](https://i.imgur.com/fQ4xrgD.png)
+![](https://i.imgur.com/fQ4xrgD.png)
