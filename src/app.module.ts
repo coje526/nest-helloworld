@@ -9,7 +9,7 @@ import { RedisModule } from '@nestjs-modules/ioredis';
       useFactory: () => ({
         config: { 
           url: 'redis://redis:6379',
-          password: 'password'
+          password: process.env.REDIS_PASSWD
         },
       }),
     }),

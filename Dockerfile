@@ -20,7 +20,6 @@ WORKDIR /usr/src
 COPY --chown=node:node  . .
 COPY --chown=node:node --from=prebuild /usr/src/node_modules ./node_modules
 
-ENV NODE_ENV staging
 RUN npm run build && \
     npm ci --only=production --legacy-peer-deps && \
     npm cache clean --force

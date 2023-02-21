@@ -11,8 +11,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-    environment:
-      NODE_ENV: production
     ports:
       - target: 3000
         published: 3000
@@ -31,7 +29,14 @@ services:
       - target: 6379
         published: 6379
         protocol: tcp
-    environment: 
-      - ENV=develop
     env_file:
       - redis.env
+  db:
+    image: "mariadb:10.5.3"
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./db/data:/var/lib/mysql
+      - ./db/initdb.d:/docker-entrypoint-initdb.d
+    env_file:
+      - sql.env

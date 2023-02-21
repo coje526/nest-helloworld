@@ -15,6 +15,7 @@ module.exports = {
       },
       env_staging: {
         NODE_ENV: 'staging',
+        REDIS_PASSWD: 'password'
       }
     }]
   }

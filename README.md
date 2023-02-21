@@ -1,39 +1,54 @@
-# Redis SET NX 建立互斥鎖
-[描述]
-透過 Redis SET NX 來建立互斥鎖，以避免資料的 race condition
+# 作業六： 架設 Mariadb sql server
+
+[實作功能]
+於本機端透過 docker 架設 Mariadb SQL server
 
 [驗收方式]
 
-於 Redis 中先建立 {"treasure": 100}。
-寫一隻可用來改變 treasure 的 api (假設行為是 value += 1)
-連續呼叫 api
-treasure 在十秒內只能被改變一次
+需透過 docker env 對 SQL server 設定連線用的帳號密碼
+可透過 SQL client tool 與 SQL server 進行連線
+透過 docker-compose 部署驗收環境
+
 
 ---
-1. `app.service.ts`:
+1. `docker-compose.yml` 新增：
 ```tsm
-  async treasure() {
-    let lock = await this.redis.set('lock.foo', 1, 'EX', 10, 'NX');
-    if (lock == 'OK'){
-      const redisData = parseInt(await this.redis.get('treasure')) + 1;
-      await this.redis.set('treasure', redisData );
-      await this.redis.del('lock.foo'); 
-      return redisData;
-    } 
-      return 'error';
-  }
+ db:
+    image: "mariadb:10.5.3"
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./db/data:/var/lib/mysql
+      - ./db/initdb.d:/docker-entrypoint-initdb.d
+     env_file:
+      - sql.env"
 ```
-2. `app.controller.ts`
+2.  新增 `db/data` 及 `db/initdb.d/init.sql`
+    ![](https://i.imgur.com/nVnCpQg.png)
+3. `init.sql`:
 ```tsm
-  @Get('api/treasure')
-  async treasure() {
-    return this.appService.treasure();
-  }
+CREATE DATABASE IF NOT EXISTS testdb;
+
+use testdb;
+
+CREATE TABLE IF NOT EXISTS tasks (
+  task_id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  start_date DATE,
+  due_date DATE,
+  status TINYINT NOT NULL,
+  priority TINYINT NOT NULL,
+  description TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)  ENGINE=INNODB;
 ```
-3. 新增一個 `script` 資料夾加入 `for_crul.ts`
+4. `sql.env`:
 ```tsm
-for i in {1..5}; do
-  curl 'http://localhost:3000/api/treasure'
-done
+MYSQL_USER=test
+MYSQL_PASSWORD=123456
+MYSQL_DATABASE=testdb
+MYSQL_ROOT_PASSWORD=123456
 ```
-4. 使用`sh script/for_curl.sh`來連續打api
+5. 執行`docker build -t app . && docker-compose up`
+6. 使用 TablePlus 連線
+7.  ![](https://i.imgur.com/fQ4xrgD.png)
