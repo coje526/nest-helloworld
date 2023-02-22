@@ -51,4 +51,30 @@ MYSQL_ROOT_PASSWORD=123456
 ```
 5. 執行`docker build -t app . && docker-compose up`
 6. 使用 TablePlus 連線
-![](https://i.imgur.com/fQ4xrgD.png)
+7. ![](https://i.imgur.com/PqLngm5.png)
+
+   ![](https://i.imgur.com/fQ4xrgD.png)
+   
+---
+### 新增其他user
+
+1. `test.sh`:
+```tsm
+#!/bin/bash
+mysql -u $MYSQL_ROOT_USERNAME -p$MYSQL_ROOT_PASSWORD -h 127.0.0.1 -e "CREATE USER '$MYSQL_USERNAME'@'%' IDENTIFIED BY '$MYSQL_PASSWORD';"
+mysql -u $MYSQL_ROOT_USERNAME -p$MYSQL_ROOT_PASSWORD -h 127.0.0.1 -e "GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, FILE, ALTER ON *.* TO '$MYSQL_USERNAME'@'%';"
+mysql -u $MYSQL_ROOT_USERNAME -p$MYSQL_ROOT_PASSWORD -h 127.0.0.1 -e "FLUSH PRIVILEGES;"
+```
+2. `brew install mysql`
+3. `sh test.sh`
+:::success
+* `CREATE USER 'nick'@'%' IDENTIFIED BY 'password';`
+新增USER
+* `SELECT user FROM mysql.user;`
+所有user
+* `GRANT ALL PRIVILEGES ON `testdb` . * TO 'nick'@'%';`
+設定權限
+* `DROP USER 'mike'@'%';`
+刪除user
+:::
+![](https://i.imgur.com/buLLsp1.png)
