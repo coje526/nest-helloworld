@@ -9,6 +9,7 @@ async function bootstrap() {
   logger: new AppLogger(process.env.NODE_ENV),
 });
 setupSwagger(app);
+app.setGlobalPrefix('api');
 await app.listen(3000);
 }
 
@@ -18,7 +19,6 @@ function setupSwagger(app: INestApplication) {
     .setTitle('SMMS MES API Document')
     .setDescription('Base URL: localhost:3000/api')
     .setVersion('1.0')
-    .addApiKey(null, "token")
     .build();
   const document = SwaggerModule.createDocument(app, config);
   const options: SwaggerCustomOptions = {

@@ -1,80 +1,208 @@
-# 作業六： 架設 Mariadb sql server
-
+# 作業七：使用 TypeORM 操作 SQL server
 [實作功能]
-於本機端透過 docker 架設 Mariadb SQL server
+於開發環境中使用 TypeORM 對 Mariadb SQL server 進行操作
 
 [驗收方式]
 
-需透過 docker env 對 SQL server 設定連線用的帳號密碼
-可透過 SQL client tool 與 SQL server 進行連線
+可用 TypeORM 對 Mariadb SQL server 進行連線 
+使用 TypeORM 建立 SQL 資料表(table name: fruit_price, column: id, name, price)
+於開發環境中實作可對 fruit_price 資料表進行 insert/update/delete 的 API
 透過 docker-compose 部署驗收環境
 
+---
+
+1. `npm install --save @nestjs/typeorm typeorm mysql2`
+2. `app.module.ts`
+```tsm
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Fruit } from './entity/Fruit';
+
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([
+      Fruit,
+    ]),
+    TypeOrmModule.forRoot({
+      type: "mariadb",
+      host: "db",
+      port: 3306,
+      username: "root",
+      password: "123456",
+      database: "testdb",
+      synchronize: true,
+      logging: false,
+      entities: [Fruit],
+      migrations: [],
+      subscribers: [],
+  }),
+ ]})
+```
+3. `Fruit.ts`
+```tsm
+import {Column, Entity, PrimaryGeneratedColumn} from "typeorm";
+
+@Entity('fruit_price') // 指定table name
+export class Fruit {
+    // 每新增一筆的時候id+1
+    @PrimaryGeneratedColumn()
+    id: number;
+  
+    @Column()
+    name: string;
+    
+    @Column()
+    price: number;
+}
+
+```
+![](https://i.imgur.com/K8Qvg7U.png)
+4. `fruit.dto.ts`
+```tsm
+import {  ApiProperty } from '@nestjs/swagger';
+
+export class FruitDto {
+  
+      @ApiProperty({
+        description: 'fruit_name',
+      })
+      name: string;
+    
+      @ApiProperty({
+        description: 'fruit_price',
+      })
+      price: number;
+  
+}
+```
+
+5. `app.service.ts`
+```tsm
+@Injectable()
+export class AppService {
+  constructor(
+    @InjectRedis() private readonly redis: Cluster,
+    @InjectRepository(Fruit) private readonly userRepo: Repository<Fruit>
+  ) {}
+
+  async addFruit(data: FruitDto){
+    const fruit = new Fruit();
+    fruit.name = data.name;
+    fruit.price = data.price;
+    return await this.userRepo.save(fruit);
+  }
+    async updateFruit(id, data: FruitDto){
+    return await this.userRepo.update(id, data); 
+  }
+
+  async deleteFruit(id){
+    return this.userRepo.delete(id); 
+  }
+}
+
+```
+6. `app.controller.ts`
+```tsm
+ @Post('api/fruit')
+  create(@Body() fruitDTO: FruitDto){
+    return this.appService.addFruit(fruitDTO); //呼叫appService對資料庫新增資料
+  }
+  
+  @Put('api/fruit/:fruitId')
+  @ApiParam({
+    name: 'fruitId',
+    type: 'number',
+    description: 'fruit index',
+    required: true,
+  })
+  updateUserById(@Param('fruitId') id, @Body() fruitDTO: FruitDto){
+    return this.appService.updateFruit(id, fruitDTO);
+  }
+
+  @Delete('api/fruit/:fruitId')
+  @ApiParam({
+    name: 'fruitId',
+    type: 'number',
+    description: 'fruit index',
+    required: true,
+  })
+  delete(@Param('fruitId') id){
+    return this.appService.deleteFruit(id);
+  }
+  
+```
+---
+#### 實際操作
+1. POST `name:'lemon'` `price:500`
+![](https://i.imgur.com/gjmMQKV.png)
+![](https://i.imgur.com/Fxjdy2c.png)
+2.  PUT `id:3` `name:'lemon'` `price:50`
+![](https://i.imgur.com/GTPrauG.png)
+![](https://i.imgur.com/2hBZLjr.png)
+3. delete `id:3`
+![](https://i.imgur.com/Xup1y6j.png)
+![](https://i.imgur.com/WXcP40P.png)
 
 ---
-1. `docker-compose.yml` 新增：
+#### createQueryBuilder
+1. SelectQueryBuilder
 ```tsm
- db:
-    image: "mariadb:10.5.3"
-    ports:
-      - "3306:3306"
-    volumes:
-      - ./db/data:/var/lib/mysql
-      - ./db/initdb.d:/docker-entrypoint-initdb.d
-     env_file:
-      - sql.env"
+  async getFruitsById(){
+    const fruit = await this.userRepo
+                      .createQueryBuilder()
+                      .select("fruit")
+                      .from(Fruit, "fruit")
+                      .where("fruit.id = :id", { id: 4 })
+                      .getOne()
+    return fruit
+  }
 ```
-2.  新增 `db/data` 及 `db/initdb.d/init.sql`
-    ![](https://i.imgur.com/nVnCpQg.png)
-3. `init.sql`:
+![](https://i.imgur.com/3ZhSWSX.png)
+2. InsertQueryBuilder
 ```tsm
-CREATE DATABASE IF NOT EXISTS testdb;
-
-use testdb;
-
-CREATE TABLE IF NOT EXISTS tasks (
-  task_id INT AUTO_INCREMENT PRIMARY KEY,
-  title VARCHAR(255) NOT NULL,
-  start_date DATE,
-  due_date DATE,
-  status TINYINT NOT NULL,
-  priority TINYINT NOT NULL,
-  description TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)  ENGINE=INNODB;
+ async getFruitsById(){
+    const fruit = await this.userRepo
+                      .createQueryBuilder()
+                      .insert()
+                      .into(Fruit)
+                      .values([
+                          { name: "papaya", price: 30 },
+                          { name: "orange", price: 50 },
+                      ])
+                      .execute()
+    return fruit
+  }
 ```
-4. `sql.env`:
+![](https://i.imgur.com/GTQCZte.png)
+3. UpdateQueryBuilder
 ```tsm
-MYSQL_USER=test
-MYSQL_PASSWORD=123456
-MYSQL_DATABASE=testdb
-MYSQL_ROOT_PASSWORD=123456
+  async getFruitsById(){
+    const fruit = await this.userRepo
+                      .createQueryBuilder()  
+                      .update(Fruit)
+                      .set({ name: "mango", price: 300})
+                      .where("id = :id", { id: 6 })
+                      .execute()
+    return fruit
+  }
 ```
-5. 執行`docker build -t app . && docker-compose up`
-6. 使用 TablePlus 連線
-7. ![](https://i.imgur.com/PqLngm5.png)
+![](https://i.imgur.com/RFJ1Bq2.png)
+4. DeleteQueryBuilder
+```tsm
+  async getFruitsById(){
+    const fruit = await this.userRepo
+                      .createQueryBuilder()  
+                      .delete()
+                      .from(Fruit)
+                      .where("id = :id", { id: 5 })
+                      .execute()
+    return fruit
+  }
+```
+![](https://i.imgur.com/OrMdBhP.png)
 
-   ![](https://i.imgur.com/fQ4xrgD.png)
-   
 ---
-### 新增其他user
+在執行`typeorm init --database mariadb`遇到
+所以把`@nestjs-modules/ioredis`換成`@liaoliaots/nestjs-redis`
+![](https://i.imgur.com/oZV8B8s.png)
 
-1. `test.sh`:
-```tsm
-#!/bin/bash
-mysql -u $MYSQL_ROOT_USERNAME -p$MYSQL_ROOT_PASSWORD -h 127.0.0.1 -e "CREATE USER '$MYSQL_USERNAME'@'%' IDENTIFIED BY '$MYSQL_PASSWORD';"
-mysql -u $MYSQL_ROOT_USERNAME -p$MYSQL_ROOT_PASSWORD -h 127.0.0.1 -e "GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, FILE, ALTER ON *.* TO '$MYSQL_USERNAME'@'%';"
-mysql -u $MYSQL_ROOT_USERNAME -p$MYSQL_ROOT_PASSWORD -h 127.0.0.1 -e "FLUSH PRIVILEGES;"
-```
-2. `brew install mysql`
-3. `sh test.sh`
-:::success
-* `CREATE USER 'nick'@'%' IDENTIFIED BY 'password';`
-新增USER
-* `SELECT user FROM mysql.user;`
-所有user
-* `GRANT ALL PRIVILEGES ON `testdb` . * TO 'nick'@'%';`
-設定權限
-* `DROP USER 'mike'@'%';`
-刪除user
-:::
-![](https://i.imgur.com/buLLsp1.png)

@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Body, Delete, Query, Headers} from '@nestjs/common';
-import { ApiHeader, getSchemaPath, ApiExtraModels, ApiQuery, ApiBasicAuth, ApiTags, ApiOkResponse, ApiBadRequestResponse,ApiOperation } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Delete, Query, Headers, Put, Param} from '@nestjs/common';
+import { ApiHeader, getSchemaPath, ApiExtraModels, ApiQuery, ApiBasicAuth, ApiTags, ApiOkResponse, ApiBadRequestResponse,ApiOperation, ApiParam } from '@nestjs/swagger';
 import { AppService} from './app.service';
 import { CreateStockedRecord } from './dto/create-stocked-record.dto';
 import { StockedDto } from './dto/stocked.dto';
 import { StockedDetailDto } from './dto/stocked-detail.dto';
+import { FruitDto } from './dto/fruit.dto';
 
 @ApiBasicAuth()
 @ApiTags('stock')
@@ -251,13 +252,42 @@ export class AppController {
     return this.appService.treasure();
   }
 
-
   @Delete('api/redis')
   async deleteKey() {
     return this.appService.deleteKey();
   }
 
+  @Post('api/fruit')
+  create(@Body() fruitDTO: FruitDto){
+    return this.appService.addFruit(fruitDTO); //呼叫appService對資料庫新增資料
+  }
   
+  @Put('api/fruit/:fruitId')
+  @ApiParam({
+    name: 'fruitId',
+    type: 'number',
+    description: 'fruit index',
+    required: true,
+  })
+  updateUserById(@Param('fruitId') id, @Body() fruitDTO: FruitDto){
+    return this.appService.updateFruit(id, fruitDTO);
+  }
+
+  @Delete('api/fruit/:fruitId')
+  @ApiParam({
+    name: 'fruitId',
+    type: 'number',
+    description: 'fruit index',
+    required: true,
+  })
+  delete(@Param('fruitId') id){
+    return this.appService.deleteFruit(id);
+  }
+
+  @Get('api/test')
+  async test() {
+    return this.appService.getFruitsById();
+  }
 }
 
 

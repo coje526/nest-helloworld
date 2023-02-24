@@ -1,14 +1,43 @@
 import { Injectable } from '@nestjs/common';
-import { CreateStockedRecord } from './dto/create-stocked-record.dto';
 import { StockedDto } from './dto/stocked.dto';
-import { InjectRedis, Redis } from '@nestjs-modules/ioredis';
+import { FruitDto } from './dto/fruit.dto';
+import { InjectRedis } from '@liaoliaots/nestjs-redis';
+import { Cluster } from 'ioredis';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Fruit } from './entity/Fruit';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class AppService {
   private key = 'jenny';
   private date = new Date();
-  constructor(@InjectRedis() private readonly redis: Redis) {}
-  
+  constructor(
+    @InjectRedis() private readonly redis: Cluster,
+    @InjectRepository(Fruit) private readonly userRepo: Repository<Fruit>
+  ) {}
+
+  async addFruit(data: FruitDto){
+    const fruit = new Fruit();
+    fruit.name = data.name;
+    fruit.price = data.price;
+    return await this.userRepo.save(fruit);
+  }
+  async getFruitsById(){
+    const fruit = await this.userRepo
+                      .createQueryBuilder()  
+                      .delete()
+                      .from(Fruit)
+                      .where("id = :id", { id: 6 })
+                      .execute()
+    return fruit
+  }
+  async updateFruit(id, data: FruitDto){
+    return await this.userRepo.update(id, data); 
+  }
+
+  async deleteFruit(id){
+    return this.userRepo.delete(id); 
+  }
   
   StockedDto(data: StockedDto) {
     return data;

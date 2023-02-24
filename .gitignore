@@ -1,7 +1,7 @@
-node_modules
-dist
-logs
-.DS_Store
-redis.env
-data
-sql.env
+.idea/
+.vscode/
+node_modules/
+dist/
+tmp/
+temp/
+db/
