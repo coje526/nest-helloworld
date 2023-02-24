@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Delete, Query, Headers, Put, Param} from '@nestjs/common';
+import { Controller, Get, Post, Body, Delete, Query, Headers, Put, Param, UseInterceptors, CacheInterceptor, CacheTTL, CacheKey, } from '@nestjs/common';
 import { ApiHeader, getSchemaPath, ApiExtraModels, ApiQuery, ApiBasicAuth, ApiTags, ApiOkResponse, ApiBadRequestResponse,ApiOperation, ApiParam } from '@nestjs/swagger';
 import { AppService} from './app.service';
 import { CreateStockedRecord } from './dto/create-stocked-record.dto';
@@ -10,10 +10,10 @@ import { FruitDto } from './dto/fruit.dto';
 @ApiTags('stock')
 @Controller()
 export class AppController {
-  
+ 
   private tokenList = [];
   constructor(private readonly appService: AppService) {}
- 
+  
   @Get('api/stocks/list')
   @ApiOperation({
     description: '取得可編輯入庫資料的工單清單',
@@ -250,6 +250,18 @@ export class AppController {
   @Get('api/treasure')
   async treasure() {
     return this.appService.treasure();
+  }
+  
+ 
+  @Get('api/getcache')
+  async getFruitCache() {
+    return this.appService.getFruitCache();
+  }
+
+ 
+  @Post('api/getcache')
+  async updateFruitCache() {
+    return this.appService.updateFruitCache();
   }
 
   @Delete('api/redis')

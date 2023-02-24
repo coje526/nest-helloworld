@@ -9,7 +9,6 @@ async function bootstrap() {
   logger: new AppLogger(process.env.NODE_ENV),
 });
 setupSwagger(app);
-app.setGlobalPrefix('api');
 await app.listen(3000);
 }
 

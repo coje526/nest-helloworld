@@ -7,9 +7,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Fruit } from './entity/Fruit';
 import { Repository } from 'typeorm';
 
+
 @Injectable()
 export class AppService {
-  private key = 'jenny';
+  private key = 'apple';
   private date = new Date();
   constructor(
     @InjectRedis() private readonly redis: Cluster,
@@ -81,6 +82,34 @@ export class AppService {
     } 
       return 'error';
   }
+
+  async getFruitCache() {
+    let redisData = await this.redis.get('kiwi');
+    if(redisData === null){
+      const fruit = await this.userRepo
+                  .createQueryBuilder()
+                  .select('fruit_price')
+                  .from(Fruit, 'fruit_price')
+                  .where("fruit_price.name = :name", { name: 'kiwi' })
+                  .getOne()  
+      await this.redis.set('kiwi',  JSON.stringify(fruit), 'EX', 3, 'NX');
+      console.log('cache missing');
+      return fruit
+    }
+    redisData = await this.redis.set('kiwi', 1, 'EX', 3, 'NX');
+    console.log('cache hit')
+    return redisData
+  }
+
+  async updateFruitCache() {
+    const fruit = await this.userRepo
+                  .createQueryBuilder()  
+                  .update(Fruit)
+                  .set({ name: 'kiwi', price: 30})
+                  .where('id = :id', { id: 4 })
+                  .execute()
+  }
+
 
   async deleteKey() {
     await this.redis.del(this.key);
