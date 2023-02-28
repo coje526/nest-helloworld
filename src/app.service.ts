@@ -92,11 +92,11 @@ export class AppService {
                   .from(Fruit, 'fruit_price')
                   .where("fruit_price.name = :name", { name: 'kiwi' })
                   .getOne()  
-      await this.redis.set('kiwi',  JSON.stringify(fruit), 'EX', 3, 'NX');
+      await this.redis.set('kiwi',  JSON.stringify(fruit), 'EX', 3);
       console.log('cache missing');
       return fruit
     }
-    redisData = await this.redis.set('kiwi', 1, 'EX', 3, 'NX');
+    await this.redis.set('kiwi', redisData, 'EX', 3);
     console.log('cache hit')
     return redisData
   }
@@ -105,9 +105,10 @@ export class AppService {
     const fruit = await this.userRepo
                   .createQueryBuilder()  
                   .update(Fruit)
-                  .set({ name: 'kiwi', price: 30})
+                  .set({ name: 'kiwi', price: 50})
                   .where('id = :id', { id: 4 })
                   .execute()
+    await this.redis.set('kiwi',  JSON.stringify(fruit), 'EX', 3);
   }
 
 
