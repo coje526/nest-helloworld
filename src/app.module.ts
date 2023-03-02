@@ -4,16 +4,17 @@ import { AppService } from './app.service';
 import { RedisModule } from '@liaoliaots/nestjs-redis';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Fruit } from './entity/Fruit';
-
+import { GatewayModule } from './gateway.module';
 
 @Module({
   imports: [
+    GatewayModule,
     TypeOrmModule.forFeature([
       Fruit,
     ]),
     TypeOrmModule.forRoot({
       type: "mariadb",
-      host: "127.0.0.1",
+      host: "db",
       port: 3306,
       username: "root",
       password: "123456",
@@ -27,7 +28,7 @@ import { Fruit } from './entity/Fruit';
     RedisModule.forRootAsync({
       useFactory: () => ({
         config: { 
-          url: 'redis://127.0.0.1:6379',
+          url: 'redis://redis:6379',
           password: 'password'
         },
       }),

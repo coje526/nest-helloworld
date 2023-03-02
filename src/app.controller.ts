@@ -14,13 +14,13 @@ export class AppController {
   private tokenList = [];
   constructor(private readonly appService: AppService) {}
   
-  @Get('api/stocks/list')
+  @Get('stocks/list')
   @ApiOperation({
     description: '取得可編輯入庫資料的工單清單',
   })
   @ApiHeader({
     name: 'token',
-    description: '由 api/auth/login 取得',
+    description: '由 auth/login 取得',
     required: true,
   })
   @ApiExtraModels(StockedDto)
@@ -84,10 +84,10 @@ export class AppController {
     return 'Hi';
   }
   
-  @Get('api/stocks')
+  @Get('stocks')
   @ApiHeader({
     name: 'token',
-    description: '由 api/auth/login 取得',
+    description: '由 auth/login 取得',
     required: true,
   })
   @ApiQuery({
@@ -158,10 +158,10 @@ export class AppController {
     return this.appService.getStocks(dispatchId, token);;
   }
   
-  @Post('api/stocks')
+  @Post('stocks')
   @ApiHeader({
     name: 'token',
-    description: '由 api/auth/login 取得',
+    description: '由 auth/login 取得',
     required: true,
   })
   @ApiQuery({
@@ -233,48 +233,48 @@ export class AppController {
     return this.appService.createStockedRecord(obj);
   }
 
-  @Get('api/healthy')
+  @Get('healthy')
   async getHealthy() {
     return this.appService.getHealthy();
   }
 
-  @Post('api/redis')
+  @Post('redis')
   async setKey() {
     return this.appService.setKey();
   }
-  @Get('api/redis')
+  @Get('redis')
   async getKey() {
     return this.appService.getKey();
   }
 
-  @Get('api/treasure')
+  @Get('treasure')
   async treasure() {
     return this.appService.treasure();
   }
   
  
-  @Get('api/getcache')
+  @Get('getcache')
   async getFruitCache() {
     return this.appService.getFruitCache();
   }
 
  
-  @Post('api/getcache')
+  @Post('getcache')
   async updateFruitCache() {
     return this.appService.updateFruitCache();
   }
 
-  @Delete('api/redis')
+  @Delete('redis')
   async deleteKey() {
     return this.appService.deleteKey();
   }
 
-  @Post('api/fruit')
+  @Post('fruit')
   create(@Body() fruitDTO: FruitDto){
     return this.appService.addFruit(fruitDTO); //呼叫appService對資料庫新增資料
   }
   
-  @Put('api/fruit/:fruitId')
+  @Put('fruit/:fruitId')
   @ApiParam({
     name: 'fruitId',
     type: 'number',
@@ -285,7 +285,7 @@ export class AppController {
     return this.appService.updateFruit(id, fruitDTO);
   }
 
-  @Delete('api/fruit/:fruitId')
+  @Delete('fruit/:fruitId')
   @ApiParam({
     name: 'fruitId',
     type: 'number',
@@ -296,7 +296,7 @@ export class AppController {
     return this.appService.deleteFruit(id);
   }
 
-  @Get('api/test')
+  @Get('test')
   async test() {
     return this.appService.getFruitsById();
   }
