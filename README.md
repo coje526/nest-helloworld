@@ -1,208 +1,145 @@
-# 作業七：使用 TypeORM 操作 SQL server
+# 作業八：實作 Websocket 功能
 [實作功能]
-於開發環境中使用 TypeORM 對 Mariadb SQL server 進行操作
+於開發環境中使用 socket.io library 實作 Websocket 功能
 
 [驗收方式]
 
-可用 TypeORM 對 Mariadb SQL server 進行連線 
-使用 TypeORM 建立 SQL 資料表(table name: fruit_price, column: id, name, price)
-於開發環境中實作可對 fruit_price 資料表進行 insert/update/delete 的 API
-透過 docker-compose 部署驗收環境
+使用 postman 測試 Websocket 連線
+前端可與後端透過 websocket 連線
+後端可推送資料至前端，讓前端接收並顯示推送的資料
+需搭配 pm2 建立多個 instance 環境
+透過 docker 部署驗收環境
 
 ---
+WebSocket 是一種基於 TCP 協議的通信協議，它可以在客戶端和服務器之間建立一個持久化的連接，實現雙向通信。在建立 WebSocket 連接後，客戶端和服務器可以隨時互相傳送數據，並且不需要每次傳送數據時都重新建立連接。WebSocket 是一種純粹的協議，它只能夠實現數據的傳輸，而不能夠實現更高層次的功能，例如房間管理、事件發佈等等。
 
-1. `npm install --save @nestjs/typeorm typeorm mysql2`
-2. `app.module.ts`
+Socket.IO 是一個基於 WebSocket 的庫，它提供了許多 WebSocket 沒有的高級功能，例如房間管理、事件發佈等等。Socket.IO 支持多種瀏覽器和服務器端的實現方式，包括 Node.js、Python、Ruby、Java 等等。
+
+
+---
+1. `npm i --save @nestjs/websockets @nestjs/platform-socket.io`
+
+2. `gateway.ts`:
 ```tsm
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { Fruit } from './entity/Fruit';
+import { OnModuleInit } from '@nestjs/common';
+import {
+  MessageBody,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
+} from '@nestjs/websockets';
+import { Server } from 'socket.io';
 
+@WebSocketGateway(3001, {
+  cors: {
+    origin: ['*'],
+  },
+})
+export class MyGateway implements OnModuleInit {
+  @WebSocketServer()
+  server: Server;
+
+  onModuleInit() {
+    this.server.on('connection', (socket) => {
+      console.log(socket.id);
+      console.log('Connected');
+    });
+  }
+
+  @SubscribeMessage('newMessage')
+  onNewMessage(@MessageBody() body: any) {
+    console.log(body);
+    this.server.emit('onMessage', {
+      msg: 'New Message',
+      content: body,
+    });
+  }
+}
+```
+3. 新增 `gateway.module.ts`:
+```tsm
+import { Module } from '@nestjs/common';
+import { MyGateway } from './gateway';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([
-      Fruit,
-    ]),
-    TypeOrmModule.forRoot({
-      type: "mariadb",
-      host: "db",
-      port: 3306,
-      username: "root",
-      password: "123456",
-      database: "testdb",
-      synchronize: true,
-      logging: false,
-      entities: [Fruit],
-      migrations: [],
-      subscribers: [],
-  }),
- ]})
+  providers: [MyGateway],
+})
+export class GatewayModule {}
 ```
-3. `Fruit.ts`
+4. `main.ts`:
 ```tsm
-import {Column, Entity, PrimaryGeneratedColumn} from "typeorm";
-
-@Entity('fruit_price') // 指定table name
-export class Fruit {
-    // 每新增一筆的時候id+1
-    @PrimaryGeneratedColumn()
-    id: number;
-  
-    @Column()
-    name: string;
+@Module({
+  imports: [GatewayModule]
+    })
     
-    @Column()
-    price: number;
-}
-
-```
-![](https://i.imgur.com/K8Qvg7U.png)
-4. `fruit.dto.ts`
-```tsm
-import {  ApiProperty } from '@nestjs/swagger';
-
-export class FruitDto {
-  
-      @ApiProperty({
-        description: 'fruit_name',
-      })
-      name: string;
-    
-      @ApiProperty({
-        description: 'fruit_price',
-      })
-      price: number;
-  
-}
 ```
 
-5. `app.service.ts`
-```tsm
-@Injectable()
-export class AppService {
-  constructor(
-    @InjectRedis() private readonly redis: Cluster,
-    @InjectRepository(Fruit) private readonly userRepo: Repository<Fruit>
-  ) {}
+* 使用postman
+![](https://i.imgur.com/CFcdBpD.png)
+![](https://i.imgur.com/3aFwiW6.png)
+![](https://i.imgur.com/NyB4zyB.png)
 
-  async addFruit(data: FruitDto){
-    const fruit = new Fruit();
-    fruit.name = data.name;
-    fruit.price = data.price;
-    return await this.userRepo.save(fruit);
-  }
-    async updateFruit(id, data: FruitDto){
-    return await this.userRepo.update(id, data); 
-  }
-
-  async deleteFruit(id){
-    return this.userRepo.delete(id); 
-  }
-}
-
-```
-6. `app.controller.ts`
-```tsm
- @Post('api/fruit')
-  create(@Body() fruitDTO: FruitDto){
-    return this.appService.addFruit(fruitDTO); //呼叫appService對資料庫新增資料
-  }
-  
-  @Put('api/fruit/:fruitId')
-  @ApiParam({
-    name: 'fruitId',
-    type: 'number',
-    description: 'fruit index',
-    required: true,
-  })
-  updateUserById(@Param('fruitId') id, @Body() fruitDTO: FruitDto){
-    return this.appService.updateFruit(id, fruitDTO);
-  }
-
-  @Delete('api/fruit/:fruitId')
-  @ApiParam({
-    name: 'fruitId',
-    type: 'number',
-    description: 'fruit index',
-    required: true,
-  })
-  delete(@Param('fruitId') id){
-    return this.appService.deleteFruit(id);
-  }
-  
-```
----
-#### 實際操作
-1. POST `name:'lemon'` `price:500`
-![](https://i.imgur.com/gjmMQKV.png)
-![](https://i.imgur.com/Fxjdy2c.png)
-2.  PUT `id:3` `name:'lemon'` `price:50`
-![](https://i.imgur.com/GTPrauG.png)
-![](https://i.imgur.com/2hBZLjr.png)
-3. delete `id:3`
-![](https://i.imgur.com/Xup1y6j.png)
-![](https://i.imgur.com/WXcP40P.png)
 
 ---
-#### createQueryBuilder
-1. SelectQueryBuilder
+新增room功能
+1. `gateway.ts`新增:
 ```tsm
-  async getFruitsById(){
-    const fruit = await this.userRepo
-                      .createQueryBuilder()
-                      .select("fruit")
-                      .from(Fruit, "fruit")
-                      .where("fruit.id = :id", { id: 4 })
-                      .getOne()
-    return fruit
+  @SubscribeMessage('joinRoom')
+  handleJoinRoom(client: Socket, data: { room: string }): void {
+    client.join(data.room);
+    client.emit('joinedRoom', `You have joined room "${data.room}".`);
+  }
+  @SubscribeMessage('leaveRoom')
+  handleLeaveRoom(client: Socket, data: { room: string }): void {
+    client.leave(data.room);
+    client.emit('leftRoom', `You have left room "${data.room}".`);
+  }
+  @SubscribeMessage('broadcastToRoom')
+  handleBroadcastToRoom(client: Socket, data: { room: string, message: string }): void {
+    client.to(data.room).emit('messageToRoom', `Client ${client.id} says: ${data.message}`);
   }
 ```
-![](https://i.imgur.com/3ZhSWSX.png)
-2. InsertQueryBuilder
+2. `main.ts`:
 ```tsm
- async getFruitsById(){
-    const fruit = await this.userRepo
-                      .createQueryBuilder()
-                      .insert()
-                      .into(Fruit)
-                      .values([
-                          { name: "papaya", price: 30 },
-                          { name: "orange", price: 50 },
-                      ])
-                      .execute()
-    return fruit
-  }
+const redisIoAdapter = new RedisIoAdapter(app);
+  await redisIoAdapter.connectToRedis();
+  app.useWebSocketAdapter(redisIoAdapter);
 ```
-![](https://i.imgur.com/GTQCZte.png)
-3. UpdateQueryBuilder
+3. `redis.adapter.ts`:
 ```tsm
-  async getFruitsById(){
-    const fruit = await this.userRepo
-                      .createQueryBuilder()  
-                      .update(Fruit)
-                      .set({ name: "mango", price: 300})
-                      .where("id = :id", { id: 6 })
-                      .execute()
-    return fruit
+import { IoAdapter } from '@nestjs/platform-socket.io';
+import { ServerOptions } from 'socket.io';
+import { createAdapter } from '@socket.io/redis-adapter';
+import { createClient } from 'redis';
+
+export class RedisIoAdapter extends IoAdapter {
+  private adapterConstructor: ReturnType<typeof createAdapter>;
+
+  async connectToRedis(): Promise<void> {
+    const pubClient = createClient({ url: `redis://localhost:6379`, password: `password` });
+    const subClient = pubClient.duplicate();
+
+    await Promise.all([pubClient.connect(), subClient.connect()]);
+
+    this.adapterConstructor = createAdapter(pubClient, subClient);
   }
-```
-![](https://i.imgur.com/RFJ1Bq2.png)
-4. DeleteQueryBuilder
-```tsm
-  async getFruitsById(){
-    const fruit = await this.userRepo
-                      .createQueryBuilder()  
-                      .delete()
-                      .from(Fruit)
-                      .where("id = :id", { id: 5 })
-                      .execute()
-    return fruit
+
+  createIOServer(port: number, options?: ServerOptions): any {
+    const server = super.createIOServer(port, options);
+    server.adapter(this.adapterConstructor);
+    return server;
   }
+}
 ```
-![](https://i.imgur.com/OrMdBhP.png)
+![](https://i.imgur.com/k7vrSWp.png)
+![](https://i.imgur.com/G8yWNBe.png)
+![](https://i.imgur.com/YdUSuY7.png)
 
 ---
-在執行`typeorm init --database mariadb`遇到
-所以把`@nestjs-modules/ioredis`換成`@liaoliaots/nestjs-redis`
-![](https://i.imgur.com/oZV8B8s.png)
 
+![](https://i.imgur.com/eMJ868Y.png)
+https://github.com/redis/node-redis/issues/1841
+更新redis版本
+
+![](https://i.imgur.com/xcZIvi5.png)
+119少寫password
