@@ -5,7 +5,6 @@ import { RedisModule } from '@liaoliaots/nestjs-redis';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Fruit } from './entity/Fruit';
 import { GatewayModule } from './gateway.module';
-
 @Module({
   imports: [
     GatewayModule,

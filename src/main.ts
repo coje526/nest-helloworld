@@ -3,17 +3,15 @@ import { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, SwaggerCustomOptions, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { AppLogger } from './app.logger';
+import { RedisIoAdapter } from './redis.adapter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: new AppLogger(process.env.NODE_ENV)
   });
-  app.use((req, res, next) => {
-        res.header('Access-Control-Allow-Origin', '*');
-        res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-        res.header('Access-Control-Allow-Headers', 'Content-Type, Accept');
-        next();
-    });
+  const redisIoAdapter = new RedisIoAdapter(app);
+  await redisIoAdapter.connectToRedis();
+  app.useWebSocketAdapter(redisIoAdapter);
   app.setGlobalPrefix('api');
   app.enableCors();
   setupSwagger(app);
