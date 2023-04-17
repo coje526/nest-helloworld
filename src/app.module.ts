@@ -5,15 +5,28 @@ import { RedisModule } from '@liaoliaots/nestjs-redis';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Fruit } from './entity/Fruit';
 import { GatewayModule } from './gateway.module';
+import { MqttServiceModule } from './mqtt.module';
+import { MqttModule } from 'nest-mqtt';
+
 @Module({
   imports: [
     GatewayModule,
+    MqttServiceModule,
+    MqttModule.forRoot({
+      host: '61.220.168.17',
+      username: 'smms',
+      password: '2ojujiru',
+      port: 1883,
+      share:'group1',
+      keepalive: 30000,
+      reconnectPeriod: 0,
+    }),
     TypeOrmModule.forFeature([
       Fruit,
     ]),
     TypeOrmModule.forRoot({
       type: "mariadb",
-      host: "db",
+      host: "127.0.0.1",
       port: 3306,
       username: "root",
       password: "123456",
@@ -27,7 +40,7 @@ import { GatewayModule } from './gateway.module';
     RedisModule.forRootAsync({
       useFactory: () => ({
         config: { 
-          url: 'redis://redis:6379',
+          url: 'redis://127.0.0.1:6379',
           password: 'password'
         },
       }),

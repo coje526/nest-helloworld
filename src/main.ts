@@ -7,13 +7,13 @@ import { RedisIoAdapter } from './redis.adapter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
+    cors: true,
     logger: new AppLogger(process.env.NODE_ENV)
   });
   const redisIoAdapter = new RedisIoAdapter(app);
   await redisIoAdapter.connectToRedis();
   app.useWebSocketAdapter(redisIoAdapter);
   app.setGlobalPrefix('api');
-  app.enableCors();
   setupSwagger(app);
   await app.listen(3000);
 }

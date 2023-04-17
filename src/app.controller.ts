@@ -13,7 +13,8 @@ export class AppController {
  
   private tokenList = [];
   constructor(private readonly appService: AppService) {}
-  
+
+ 
   @Get('stocks/list')
   @ApiOperation({
     description: '取得可編輯入庫資料的工單清單',
@@ -273,7 +274,8 @@ export class AppController {
   create(@Body() fruitDTO: FruitDto){
     return this.appService.addFruit(fruitDTO); //呼叫appService對資料庫新增資料
   }
-  
+
+
   @Put('fruit/:fruitId')
   @ApiParam({
     name: 'fruitId',
@@ -300,6 +302,35 @@ export class AppController {
   async test() {
     return this.appService.getFruitsById();
   }
+
+  @Get('hex')
+  convertToCelsius(@Body() data){
+    const byteArray = data['hex'].split(" ").map((hex) => parseInt(hex, 16));
+    const dataView = new DataView(new Uint8Array(byteArray).buffer);
+    const crc = ((dataView.getUint8(6) << 8) | dataView.getUint8(7));
+    const temperature = (dataView.getInt16(4))/10; 
+
+    const obj = {
+      slave_id: byteArray[0],
+      function_code: byteArray[1],
+      reg: ((byteArray[2] << 8) | byteArray[3]),
+      length: ((byteArray[4] << 8) | byteArray[5]),
+      crc: crc,
+      hex: data['hex']
+    };
+
+
+    const returnData = {
+      slave_id: byteArray[0],
+      function_code: byteArray[1],
+      reg: ((byteArray[2] << 8) | byteArray[3]),
+      data: temperature,
+      crc: crc,
+      hex: data['hex']
+    }
+
+    return [temperature, obj];
+}
 }
 
 

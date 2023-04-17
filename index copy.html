@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Socket.IO Example</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.min.js"></script>
+  </head>
+  <body>
+    <div id="messages"></div>
+    <form>
+      <p>Join Room</p>
+      <input type="text" id="messageInput" />
+      <button type="button" onclick="sendMessage()">Send</button>
+    </form>
+    <form>
+      <p>Send Message</p>
+      <input type="text" id="messageInput2" />
+      <button type="button" onclick="sendMessage2()">Send</button>
+    </form>
+    <script>
+      const messages = document.getElementById("messages");
+      const messageInput = document.getElementById("messageInput");
+      const socket = io('ws://192.168.0.24:3000?name=apple', {transports: ['websocket']});
+
+
+      // 接收到消息時觸發
+      socket.on("leftRoom", function(message) {
+        console.log(message);
+      });
+
+      socket.on("messageToUser", function(message) {
+        console.log(message);
+      });
+
+      socket.on("msgToClient", function(message) {
+        console.log(message);
+      });
+
+      socket.on("Humidity", function(message) {
+        console.log(message);
+      });
+
+      socket.on("temperature", function(message) {
+        console.log(message);
+      });
+      
+      // 發送消息
+      function sendMessage() {
+        const message = messageInput.value;
+        socket.emit("joinRoom",  {  "name": "papaya", "message": message,"room": "101" });
+        messageInput.value = "";
+      }
+      function sendMessage2() {
+        const message2 = messageInput2.value;
+        socket.emit("msgToServer",  {  "message": message2,"room": "101" });
+        messageInput.value = "";
+      }
+    </script>
+  </body>
+</html>

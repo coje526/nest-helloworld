@@ -12,6 +12,8 @@ import { Repository } from 'typeorm';
 export class AppService {
   private key = 'apple';
   private date = new Date();
+  private hex = '01 03 10 00 00 01 80 ca';
+  
   constructor(
     @InjectRedis() private readonly redis: Cluster,
     @InjectRepository(Fruit) private readonly userRepo: Repository<Fruit>
@@ -94,11 +96,11 @@ export class AppService {
                   .getOne()  
       await this.redis.set('kiwi',  JSON.stringify(fruit), 'EX', 3);
       console.log('cache missing');
-      return fruit
+      return fruit;
     }
     await this.redis.set('kiwi', redisData, 'EX', 3);
     console.log('cache hit')
-    return redisData
+    return redisData;
   }
 
   async updateFruitCache() {
@@ -116,5 +118,7 @@ export class AppService {
     await this.redis.del(this.key);
     return true;
   } 
+
+  
 }
 

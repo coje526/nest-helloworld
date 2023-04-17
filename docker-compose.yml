@@ -44,3 +44,25 @@ services:
       - ./test.sh:/tmp/test.sh
     env_file:
       - sql.env
+  mosquitto:
+    image: eclipse-mosquitto:2
+    volumes:
+      - ./db/config/:/mosquitto/config/
+      - ./logs/:/mosquitto/logs/
+    ports:
+      - 1883:1883
+      - 9001:9001
+  node-red-dashboard:
+    build: ./node-red
+    ports:
+      - 1880:1880
+    volumes:
+      - ./node-red-data:/data
+  nginx:
+    image: nginx:latest
+    ports:
+      - 80:80
+    depends_on:
+       - "docker-swagger"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro

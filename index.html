@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Socket.IO Example</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.min.js"></script>
+  </head>
+  <body>
+    <div id="messages"></div>
+    <form>
+      <p>Join Room</p>
+      <input type="text" id="messageInput" />
+      <button type="button" onclick="sendMessage()">Send</button>
+    </form>
+    <form>
+      <p>Send Message</p>
+      <input type="text" id="messageInput2" />
+      <button type="button" onclick="sendMessage2()">Send</button>
+    </form>
+    <form>
+      <p>left Room</p>
+      <input type="text" id="messageInput3" />
+      <button type="button" onclick="sendMessage3()">Send</button>
+    </form>
+    <form>
+      <p>broadcastToUser</p>
+      <input type="text" id="messageInput4" />
+      <button type="button" onclick="sendMessage4()">Send</button>
+    </form>
+    <script>
+      const messages = document.getElementById("messages");
+      const messageInput = document.getElementById("messageInput");
+      const socket = io("http://localhost:3000?name=papaya", {transports: ['websocket']}); // 建立 Socket.IO 連接
+
+      // 接收到消息時觸發
+
+      socket.on("leftRoom", function(message) {
+        console.log(message);
+      });
+
+      socket.on("messageToUser", function(message) {
+        console.log(message);
+      });
+
+      socket.on("msgToClient", function(message) {
+        console.log(message);
+      });
+
+      
+      // 發送消息
+      function sendMessage() {
+        const message = messageInput.value;
+        socket.emit("joinRoom",  {  "name": "apple", "message": message,"room": "101" });
+        messageInput.value = "";
+      }
+      function sendMessage2() {
+        const message2 = messageInput2.value;
+        socket.emit("msgToServer",  {  "message": message2,"room": "101" });
+        messageInput.value = "";
+      }
+      function sendMessage3() {
+        const message3 = messageInput3.value;
+        socket.emit("leaveRoom",  {  "name": "apple","room": "101" });
+        messageInput.value = "";
+      }
+
+      function sendMessage4() {
+        const message4 = messageInput4.value;
+        socket.emit("broadcastToUser",  {  "name": "papaya", "message": message4, "toUserName": "apple" });
+        messageInput.value = "";
+      }
+    </script>
+  </body>
+</html>

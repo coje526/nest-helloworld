@@ -6,3 +6,4 @@ tmp/
 temp/
 db/
 logs
+node-red-data
